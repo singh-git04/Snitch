@@ -23,4 +23,6 @@ export const validateRegister = [
     body("contact")
     .notEmpty().withMessage("Contact is required")
     .matches(/^[0-9]{10}$/).withMessage("Contact must be 10 digits long"),
+    body("isSeller")
+    .isBoolean().withMessage("isSeller must be a boolean")
 ]
