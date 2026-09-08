@@ -4,9 +4,15 @@ import bcrypt from "bcrypt"
 const userSchema = mongoose.Schema({
     fullname: {type:String, require:true},
     email: {type:String, require:true, unique:true},
-    contact: {type:String, require:true},
-    password: {type:String, require:true},
-    role:{type:String, enum:["buyer", "seller"],default:"buyer"}
+    contact: {type:String, require:false},
+    password: {type:String,
+         require:function(){
+            return !this.googleId
+         }},
+    role:{type:String, enum:["buyer", "seller"],default:"buyer"},
+    googleId: {
+        type:String,
+    }
 })
 
 
