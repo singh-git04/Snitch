@@ -1,6 +1,7 @@
 import {Router} from 'express'
 import { authenticateSeller } from '../middleware/authenticateSeller.js'
 import multer from 'multer'
+import { createProduct } from '../controller/product.controller.js'
 
 
 
@@ -14,8 +15,12 @@ const upload = multer({
 
 const router = Router()
 
-
-router.post('/',authenticateSeller, upload.array('images', 7), )
+/* 
+    @route POST /api/products
+    @description Create new product
+    @acess Private (Seller only)
+*/
+router.post('/',authenticateSeller, upload.array('images', 7),createProduct )
 
 
 export default router

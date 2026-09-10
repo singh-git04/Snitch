@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { useAuth  } from '../hook/useAuth'
 import ContinueWithGoogle from '../../../components/ContinueWithGoogle'
@@ -63,7 +63,7 @@ const Register = () => {
         contact: formData.contact,
         password: formData.password,
         fullname: formData.fullname,
-        isSeller: formData.isSeller
+        isSeller: formData.seller
     })
 
     setIsLoading(true)

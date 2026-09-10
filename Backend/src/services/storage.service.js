@@ -1,5 +1,5 @@
 import ImageKit from '@imagekit/nodejs';
-import { config } from '../config/config';
+import { config } from '../config/config.js';
 
 
 const client = new ImageKit({
