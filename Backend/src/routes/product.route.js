@@ -1,7 +1,7 @@
 import {Router} from 'express'
 import { authenticateSeller } from '../middleware/authenticateSeller.js'
 import multer from 'multer'
-import { createProduct } from '../controller/product.controller.js'
+import { createProduct, getSellerProducts } from '../controller/product.controller.js'
 
 
 
@@ -21,6 +21,14 @@ const router = Router()
     @acess Private (Seller only)
 */
 router.post('/',authenticateSeller, upload.array('images', 7),createProduct )
+
+/* 
+    @route Get /api/products/seller
+    @description Get details  of authenticated product
+    @acess Private (Seller only)
+*/
+
+router.get('/seller',authenticateSeller,getSellerProducts)
 
 
 export default router
