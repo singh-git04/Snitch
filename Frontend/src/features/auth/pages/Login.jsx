@@ -1,10 +1,10 @@
 import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router'
-import {useAuth} from "../hook/useAuth"
+import { useAuth } from "../hook/useAuth"
 import ContinueWithGoogle from '../../../components/ContinueWithGoogle'
 
 const Login = () => {
-  const {handleLogin} = useAuth()
+  const { handleLogin } = useAuth()
   const navigate = useNavigate()
   const [formData, setFormData] = useState({
     email: '',
@@ -22,73 +22,71 @@ const Login = () => {
     if (error) setError('')
   }
 
-  const handleSubmit = async(e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     if (!formData.email || !formData.password) {
       setError('Please fill in all fields')
       return
     }
 
-    await handleLogin({
-      email: formData.email,
-      password: formData.password
-    })
-    setIsLoading(true)
-    setTimeout(() => {
-      setIsLoading(false)
-      navigate('/')
-    }, 1000)
+    try {
+      await handleLogin({
+        email: formData.email,
+        password: formData.password
+      })
+      setIsLoading(true)
+      setTimeout(() => {
+        setIsLoading(false)
+        navigate('/')
+      }, 1000)
+    } catch (err) {
+      setError(err.message || 'Login failed')
+    }
   }
 
   return (
-    <div className="min-h-screen bg-[#0d0d0d] text-[#e5e2e1] flex flex-col justify-between selection:bg-[#e5a910] selection:text-black relative overflow-hidden font-sans">
-      <div className="pointer-events-none absolute -top-40 left-1/2 -translate-x-1/2 w-[720px] h-[480px] bg-[radial-gradient(ellipse_at_center,_rgba(229,169,16,0.12)_0%,_rgba(217,119,6,0.04)_45%,_transparent_70%)] blur-2xl" />
-
-      <header className="relative z-10 w-full max-w-7xl mx-auto px-6 sm:px-10 lg:px-16 py-7 flex items-center justify-between border-b border-white/[0.06]">
-        <Link to="/" className="group flex items-center gap-2.5">
-          <span className="font-mono text-xl sm:text-2xl font-bold tracking-[0.28em] text-white group-hover:text-[#e5a910] transition-colors duration-200">
-            SNITCH
-          </span>
-          <span className="w-1.5 h-1.5 rounded-full bg-[#e5a910]" />
+    <div className="min-h-screen bg-white text-neutral-900 flex flex-col justify-between selection:bg-black selection:text-white antialiased font-sans">
+      {/* Top Navigation */}
+      <header className="w-full max-w-6xl mx-auto px-6 py-8 flex items-center justify-between border-b border-neutral-200">
+        <Link to="/" className="text-xl font-bold tracking-[0.2em] text-black hover:opacity-75 transition-opacity">
+          SNITCH
         </Link>
-        <div className="flex items-center gap-4 text-xs font-mono tracking-widest uppercase">
-          <span className="hidden sm:inline text-zinc-500">New to Snitch?</span>
+        <div className="flex items-center gap-4 text-xs font-mono tracking-wider uppercase">
+          <span className="text-neutral-500">New customer?</span>
           <Link
             to="/register"
-            className="text-zinc-300 hover:text-[#e5a910] transition-colors border-b border-transparent hover:border-[#e5a910] pb-0.5"
+            className="text-black hover:underline underline-offset-4"
           >
             Create Account
           </Link>
         </div>
       </header>
 
-      <main className="relative z-10 flex-grow flex items-center justify-center px-6 py-12 sm:py-16 md:py-20">
-        <div className="w-full max-w-md">
-          <div className="text-center mb-10 md:mb-12">
-            <span className="inline-block font-mono text-[11px] tracking-[0.25em] text-[#e5a910] uppercase mb-3 bg-[#e5a910]/10 px-3 py-1 rounded-full border border-[#e5a910]/20">
-              Welcome Back
-            </span>
-            <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white mb-3">
-              SIGN IN
+      {/* Main Content */}
+      <main className="flex-grow flex items-center justify-center px-6 py-16">
+        <div className="w-full max-w-sm">
+          <div className="mb-10 text-center">
+            <h1 className="text-3xl font-light tracking-tight text-neutral-900 mb-2">
+              Sign In
             </h1>
-            <p className="text-sm sm:text-base text-zinc-400 font-light leading-relaxed">
-              Access your saved archives, orders, and curated wishlist.
+            <p className="text-sm text-neutral-500 font-light">
+              Enter your email and password to access your account.
             </p>
           </div>
 
           {error && (
-            <div className="mb-6 p-3 rounded bg-red-500/10 border border-red-500/30 text-red-400 text-xs font-mono text-center">
+            <div className="mb-6 p-3 bg-red-50 border border-red-200 text-red-600 text-xs font-mono text-center">
               {error}
             </div>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="group relative pb-2 border-b border-white/[0.12] focus-within:border-[#e5a910] transition-colors duration-300">
+            <div className="space-y-2">
               <label
                 htmlFor="email"
-                className="block font-mono text-[11px] uppercase tracking-[0.18em] text-zinc-400 mb-1 group-focus-within:text-[#e5a910] transition-colors duration-200"
+                className="block text-xs font-mono uppercase tracking-wider text-neutral-500"
               >
-                Email Address
+                Email
               </label>
               <input
                 id="email"
@@ -97,25 +95,25 @@ const Login = () => {
                 value={formData.email}
                 onChange={handleChange}
                 placeholder="name@example.com"
-                className="w-full bg-transparent border-0 p-0 text-white placeholder-zinc-600 focus:outline-none focus:ring-0 text-base sm:text-[15px]"
+                className="w-full bg-neutral-50 border border-neutral-200 focus:border-black text-neutral-900 text-sm px-4 py-3 outline-none placeholder:text-neutral-400 transition-colors"
                 autoComplete="email"
               />
             </div>
 
-            <div className="group relative pb-2 border-b border-white/[0.12] focus-within:border-[#e5a910] transition-colors duration-300">
-              <div className="flex justify-between items-center mb-1">
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
                 <label
                   htmlFor="password"
-                  className="block font-mono text-[11px] uppercase tracking-[0.18em] text-zinc-400 group-focus-within:text-[#e5a910] transition-colors duration-200"
+                  className="block text-xs font-mono uppercase tracking-wider text-neutral-500"
                 >
                   Password
                 </label>
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="text-[11px] font-mono tracking-wider text-zinc-500 hover:text-[#e5a910] transition-colors"
+                  className="text-xs font-mono text-neutral-400 hover:text-black transition-colors"
                 >
-                  {showPassword ? 'HIDE' : 'SHOW'}
+                  {showPassword ? 'Hide' : 'Show'}
                 </button>
               </div>
               <input
@@ -125,7 +123,7 @@ const Login = () => {
                 value={formData.password}
                 onChange={handleChange}
                 placeholder="••••••••••••"
-                className="w-full bg-transparent border-0 p-0 text-white placeholder-zinc-600 focus:outline-none focus:ring-0 text-base sm:text-[15px]"
+                className="w-full bg-neutral-50 border border-neutral-200 focus:border-black text-neutral-900 text-sm px-4 py-3 outline-none placeholder:text-neutral-400 transition-colors"
                 autoComplete="current-password"
               />
             </div>
@@ -134,18 +132,19 @@ const Login = () => {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full bg-[#e5a910] hover:bg-[#ffc64d] text-black font-mono text-xs uppercase tracking-[0.2em] font-bold py-4 rounded transition-all duration-300 shadow-[0_4px_25px_rgba(229,169,16,0.22)] hover:shadow-[0_6px_30px_rgba(229,169,16,0.35)] active:scale-[0.99]"
+                className="w-full bg-black text-white hover:bg-neutral-800 text-xs uppercase tracking-wider font-medium py-3.5 px-4 transition-colors disabled:opacity-50"
               >
-                {isLoading ? 'Authenticating...' : 'Sign In'}
+                {isLoading ? 'Signing in...' : 'Sign In'}
               </button>
             </div>
           </form>
 
-          <ContinueWithGoogle/>
+          <ContinueWithGoogle />
+
           <div className="mt-8 text-center">
             <Link
               to="/register"
-              className="font-mono text-xs tracking-wider text-zinc-400 hover:text-[#e5a910] transition-colors"
+              className="text-xs font-mono text-neutral-500 hover:text-black transition-colors"
             >
               Don't have an account? Register
             </Link>
@@ -153,9 +152,10 @@ const Login = () => {
         </div>
       </main>
 
-      <footer className="relative z-10 w-full py-6 text-center border-t border-white/[0.04]">
-        <span className="font-mono text-[10px] tracking-[0.3em] uppercase text-zinc-600">
-          SNITCH APPAREL & ARCHIVE © {new Date().getFullYear()}
+      {/* Footer */}
+      <footer className="w-full py-6 text-center border-t border-neutral-200">
+        <span className="text-xs font-mono text-neutral-400">
+          SNITCH © {new Date().getFullYear()}
         </span>
       </footer>
     </div>
