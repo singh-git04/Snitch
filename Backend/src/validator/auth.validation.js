@@ -6,8 +6,8 @@ function validateRequest(req, res, next) {
     if(!errors.isEmpty()){
         return res.status(400).json({errors: errors.array()})
 
-        next()
     }
+    next()
 }
 
 
@@ -21,8 +21,10 @@ export const validateRegister = [
     .notEmpty().withMessage("Fullname is required")
     .isLength({min:3}).withMessage("Fullname must be at least 3 characters long"),
     body("contact")
-    .notEmpty().withMessage("Contact is required")
+    .notEmpty().withMessage("Contact is required").isNumeric().isLength({min:10, max:10})
     .matches(/^[0-9]{10}$/).withMessage("Contact must be 10 digits long"),
     body("isSeller")
-    .isBoolean().withMessage("isSeller must be a boolean")
+    .isBoolean().withMessage("isSeller must be a boolean"),
+
+    validateRequest
 ]

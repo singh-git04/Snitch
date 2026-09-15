@@ -30,15 +30,15 @@ const Login = () => {
     }
 
     try {
-      await handleLogin({
+     const user =  await handleLogin({
         email: formData.email,
         password: formData.password
       })
-      setIsLoading(true)
-      setTimeout(() => {
-        setIsLoading(false)
+     if(user.role == "buyer"){
         navigate('/')
-      }, 1000)
+      }else if(user.role == "seller"){
+        navigate('/seller/dashboard')
+      }
     } catch (err) {
       setError(err.message || 'Login failed')
     }

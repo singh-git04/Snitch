@@ -135,17 +135,8 @@ const CreateProduct = () => {
         const fd = new FormData()
         fd.append('title', title.trim())
         fd.append('description', description.trim())
-        fd.append('price[amount]', priceAmount)
-        fd.append('price[currency]', priceCurrency || 'INR')
-        fd.append(
-          'price',
-          JSON.stringify({
-            amount: Number(priceAmount),
-            currency: priceCurrency || 'INR',
-          })
-        )
-        fd.append('amount', priceAmount)
-        fd.append('currency', priceCurrency || 'INR')
+        fd.append('princeAmount', priceAmount)
+        fd.append('priceCurrency', priceCurrency || 'INR')
         fd.append('seller', sellerId)
 
         rawFiles.forEach((file) => fd.append('images', file))
@@ -171,15 +162,9 @@ const CreateProduct = () => {
           const fd = new FormData()
           fd.append('title', title.trim())
           fd.append('description', description.trim())
-          fd.append('price[amount]', priceAmount)
-          fd.append('price[currency]', priceCurrency || 'INR')
-          fd.append(
-            'price',
-            JSON.stringify({
-              amount: Number(priceAmount),
-              currency: priceCurrency || 'INR',
-            })
-          )
+          fd.append('priceAmount', priceAmount)
+          fd.append('priceCurrency', priceCurrency || 'INR')
+          
           fd.append('seller', sellerId)
           urlStrings.forEach((url) => fd.append('images', url))
           await handleCreateProduct(fd)

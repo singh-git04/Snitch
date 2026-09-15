@@ -1,6 +1,6 @@
 import { body, validationResult } from "express-validator"
 
-function validationResult(req,res,next){
+function validateRequest(req,res,next){
     const errors = validationResult(req)
 
  
