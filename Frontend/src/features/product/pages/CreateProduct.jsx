@@ -135,7 +135,7 @@ const CreateProduct = () => {
         const fd = new FormData()
         fd.append('title', title.trim())
         fd.append('description', description.trim())
-        fd.append('princeAmount', priceAmount)
+        fd.append('priceAmount', priceAmount)
         fd.append('priceCurrency', priceCurrency || 'INR')
         fd.append('seller', sellerId)
 
