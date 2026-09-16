@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo } from "react"
 import { useSelector } from "react-redux"
 import { Link, useNavigate } from "react-router"
 import { useProduct } from "../hook/useProduct"
+import SellerProductDetails from "./SellerProductDetails"
 
 const Dashboard = () => {
   const navigate = useNavigate()
@@ -338,7 +339,9 @@ const Dashboard = () => {
                 >
                   <div>
                     {/* Image */}
-                    <div className="relative aspect-[4/5] bg-neutral-100 overflow-hidden">
+                    <div 
+                    onClick={()=>{navigate(`/seller/product/${product._id}`)}}
+                    className="relative aspect-[4/5] bg-neutral-100 overflow-hidden">
                       <img
                         src={activeImgUrl}
                         alt={product.title}
@@ -514,7 +517,7 @@ const Dashboard = () => {
         )}
       </main>
 
-      {/* ==================== PRODUCT DETAIL MODAL ==================== */}
+      {/* ==================== PRODUCT DETAIL MODAL ====================
       {selectedProduct && (
         <div
           className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 sm:p-6"
@@ -598,7 +601,7 @@ const Dashboard = () => {
             </div>
           </div>
         </div>
-      )}
+      )} */}
 
       {/* ==================== FOOTER ==================== */}
       <footer className="max-w-7xl mx-auto px-6 sm:px-8 py-8 border-t border-neutral-200 flex flex-col sm:flex-row justify-between items-center gap-4 text-neutral-500 text-xs font-mono">

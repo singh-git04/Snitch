@@ -3,39 +3,39 @@ import { useParams, Link } from 'react-router'
 import { useProduct } from '../hook/useProduct'
 
 const FALLBACK_PRODUCT = {
-  _id: "6aa94bea8bfbca1d563075ac",
-  title: "title_1",
-  description: "description1",
-  seller: "6aa91c31404a26406591297f",
+  // _id: "6aa94bea8bfbca1d563075ac",
+  // title: "title_1",
+  // description: "description1",
+  // seller: "6aa91c31404a26406591297f",
   price: {
-    amount: 100,
-    currency: "INR",
+    // amount: 100,
+    // currency: "INR",
   },
   images: [
-    {
-      url: "https://ik.imagekit.io/uvkmtmuur/snitch/photo_6VsH9MZkY.png",
-      _id: "6aa94bea8bfbca1d563075ad",
-    },
-    {
-      url: "https://ik.imagekit.io/uvkmtmuur/snitch/main_I-8C0u8pW.avif",
-      _id: "6aa94bea8bfbca1d563075ae",
-    },
-    {
-      url: "https://ik.imagekit.io/uvkmtmuur/snitch/photo_CoTcdnvH0.avif",
-      _id: "6aa94bea8bfbca1d563075af",
-    },
-    {
-      url: "https://ik.imagekit.io/uvkmtmuur/snitch/Myday_yjyPhMUtN.avif",
-      _id: "6aa94bea8bfbca1d563075b0",
-    },
-    {
-      url: "https://ik.imagekit.io/uvkmtmuur/snitch/Japan_0SsKnVha2a.avif",
-      _id: "6aa94bea8bfbca1d563075b1",
-    },
+    // {
+    //   url: "https://ik.imagekit.io/uvkmtmuur/snitch/photo_6VsH9MZkY.png",
+    //   _id: "6aa94bea8bfbca1d563075ad",
+    // },
+    // {
+    //   url: "https://ik.imagekit.io/uvkmtmuur/snitch/main_I-8C0u8pW.avif",
+    //   _id: "6aa94bea8bfbca1d563075ae",
+    // },
+    // {
+    //   url: "https://ik.imagekit.io/uvkmtmuur/snitch/photo_CoTcdnvH0.avif",
+    //   _id: "6aa94bea8bfbca1d563075af",
+    // },
+    // {
+    //   url: "https://ik.imagekit.io/uvkmtmuur/snitch/Myday_yjyPhMUtN.avif",
+    //   _id: "6aa94bea8bfbca1d563075b0",
+    // },
+    // {
+    //   url: "https://ik.imagekit.io/uvkmtmuur/snitch/Japan_0SsKnVha2a.avif",
+    //   _id: "6aa94bea8bfbca1d563075b1",
+    // },
   ],
-  createdAt: "2026-09-15T13:45:14.405Z",
-  updatedAt: "2026-09-15T13:45:14.405Z",
-  __v: 0,
+  // createdAt: "2026-09-15T13:45:14.405Z",
+  // updatedAt: "2026-09-15T13:45:14.405Z",
+  // __v: 0,
 }
 
 const ProductDetail = () => {
