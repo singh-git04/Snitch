@@ -76,56 +76,6 @@ export async function addProductVariant(productId, newProductVariant) {
     return response.data
 }
 
-export async function updateProductVariant(productId, variantId, variantData) {
-    if (variantData instanceof FormData) {
-        const response = await productApiInstance.put(`/${productId}/variants/${variantId}`, variantData)
-        return response.data
-    }
-
-    const formData = new FormData()
-
-    if (Array.isArray(variantData.images)) {
-        const existingImages = []
-        const imageUrls = []
-
-        variantData.images.forEach((image) => {
-            if (image.file) {
-                formData.append("images", image.file)
-            } else if (image.isExisting) {
-                existingImages.push(image.url)
-            } else if (image.url) {
-                imageUrls.push(image.url)
-            }
-        })
-
-        formData.append("existingImages", JSON.stringify(existingImages))
-        if (imageUrls.length > 0) {
-            formData.append("imageUrls", JSON.stringify(imageUrls))
-        }
-    }
-
-    if (variantData.stock !== undefined) {
-        formData.append("stock", variantData.stock)
-    }
-
-    if (variantData.price) {
-        if (variantData.price.amount !== undefined) {
-            formData.append("priceAmount", variantData.price.amount)
-        }
-        if (variantData.price.currency) {
-            formData.append("priceCurrency", variantData.price.currency)
-        }
-    }
-
-    if (variantData.attributes) {
-        formData.append("attributes", JSON.stringify(variantData.attributes))
-    }
-
-    const response = await productApiInstance.put(`/${productId}/variants/${variantId}`, formData)
-
-    return response.data
-}
-
 export async function deleteProductVariant(productId, variantId) {
     const response = await productApiInstance.delete(`/${productId}/variants/${variantId}`)
     return response.data

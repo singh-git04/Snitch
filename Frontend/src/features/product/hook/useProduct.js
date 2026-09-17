@@ -1,4 +1,4 @@
-import { createProduct, getSellerProduct, getAllProducts, getProductById, addProductVariant, updateProductVariant, deleteProductVariant } from "../services/product.api"
+import { createProduct, getSellerProduct, getAllProducts, getProductById, addProductVariant, deleteProductVariant } from "../services/product.api"
 import { useDispatch } from "react-redux"
 import { setSellerProducts, setProducts } from '../state/product.slice'
 
@@ -43,12 +43,6 @@ export const useProduct = () => {
         return data
     }
 
-    async function handleUpdateProductVariant(productId, variantId, variantData) {
-        const data = await updateProductVariant(productId, variantId, variantData)
-
-        return data
-    }
-
     async function handleDeleteProductVariant(productId, variantId) {
         const data = await deleteProductVariant(productId, variantId)
 
@@ -61,7 +55,6 @@ export const useProduct = () => {
         handleGetAllProducts,
         handleGetProudctById,
         handleAddProductVariant,
-        handleUpdateProductVariant,
         handleDeleteProductVariant
     }
 }

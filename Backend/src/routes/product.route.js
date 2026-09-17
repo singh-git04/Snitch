@@ -1,7 +1,7 @@
 import { Router } from 'express'
 import { authenticateSeller } from '../middleware/authenticateSeller.js'
 import multer from 'multer'
-import { addProductVariant, createProduct, getAllProducts, getProductById, getSellerProducts, updateProductVariant, deleteProductVariant } from '../controller/product.controller.js'
+import { addProductVariant, createProduct, getAllProducts, getProductById, getSellerProducts, deleteProductVariant } from '../controller/product.controller.js'
 import { createProductValidator } from "../validator/product.validation.js"
 
 
@@ -58,7 +58,7 @@ router.post("/:productId/variants", authenticateSeller, upload.array('images', 7
     @description Update an existing product variant
     @access Private (Seller only)
  */
-router.put("/:productId/variants/:variantId", authenticateSeller, upload.array('images', 7), updateProductVariant)
+router.put("/:productId/variants/:variantId", authenticateSeller, upload.array('images', 7),addProductVariant)
 
 /*
     @route DELETE /api/products/:productId/variants/:variantId

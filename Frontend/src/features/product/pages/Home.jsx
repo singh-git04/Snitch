@@ -18,7 +18,7 @@ const DEMO_PRODUCTS = [
     seller: "6aa2e4dbe763976ef634087b",
     images: [
       {
-        url: "https://ik.imagekit.io/uvkmtmuur/snitch/photo_SbARopyV4.png",
+        url: "https://plus.unsplash.com/premium_photo-1673356302067-aac3b545a362?q=80&w=1287&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
         _id: "6aa82525696b14ecf90065e6",
       },
     ],
@@ -505,7 +505,7 @@ const Home = () => {
                 <span className="material-symbols-outlined text-[16px]">add</span>
                 <span>List New Product</span>
               </Link>
-            ) : (
+            ) : user ? (null): (
               <Link
                 to="/register"
                 className="border border-white/30 hover:border-white text-white/80 hover:text-white text-xs font-medium uppercase tracking-[0.2em] px-6 py-4 transition-all"

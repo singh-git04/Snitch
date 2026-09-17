@@ -44,7 +44,7 @@ const ProductDetail = () => {
 
   const [productData, setProductData] = useState(null)
   const [selectedImageIndex, setSelectedImageIndex] = useState(0)
-  const [selectedSize, setSelectedSize] = useState('M')
+  const [selectedAttributes, setSelectedAttributes] = useState({})
   const [quantity, setQuantity] = useState(1)
   const [isWishlisted, setIsWishlisted] = useState(false)
   const [activeTab, setActiveTab] = useState('description')
@@ -70,7 +70,61 @@ const ProductDetail = () => {
 
   // Active product source (API data or provided sample product data)
   const product = productData || FALLBACK_PRODUCT
-  const images = product?.images && product.images.length > 0 ? product.images : FALLBACK_PRODUCT.images
+
+  // ─── Variant Logic ────────────────────────────────────────────────────────
+  const variants = product?.variants || []
+
+  // Collect all unique attribute keys across all variants (preserving insertion order)
+  const attributeKeys = [...new Set(variants.flatMap((v) => Object.keys(v.attributes || {})))]
+
+  // Separate selectable keys (Color, Size) from info-only keys (Fit, Material, etc.)
+  const SELECTABLE_KEYS = ['color', 'size']
+  const selectableKeys = attributeKeys.filter((k) => SELECTABLE_KEYS.includes(k.toLowerCase()))
+  const infoKeys = attributeKeys.filter((k) => !SELECTABLE_KEYS.includes(k.toLowerCase()))
+
+  // Unique values per attribute key
+  const attributeOptions = attributeKeys.reduce((acc, key) => {
+    acc[key] = [...new Set(variants.map((v) => v.attributes?.[key]).filter(Boolean))]
+    return acc
+  }, {})
+
+  // Selected variant: ALL selectable keys must be chosen and match
+  const allSelectableChosen = selectableKeys.every((k) => !!selectedAttributes[k])
+  const selectedVariant = allSelectableChosen
+    ? variants.find((v) =>
+        selectableKeys.every((key) => v.attributes?.[key] === selectedAttributes[key])
+      ) || null
+    : null
+
+  // Handle attribute selection (toggle off on re-click)
+  const handleAttributeSelect = (key, value) => {
+    setSelectedAttributes((prev) => ({
+      ...prev,
+      [key]: prev[key] === value ? undefined : value,
+    }))
+    setSelectedImageIndex(0)
+  }
+
+  // Is a value compatible with the current partial selection (excluding the key being tested)?
+  const isValueAvailable = (key, value) => {
+    const otherSelections = Object.entries(selectedAttributes).filter(
+      ([k, v]) => k !== key && !!v
+    )
+    return variants.some(
+      (v) =>
+        v.attributes?.[key] === value &&
+        otherSelections.every(([k, val]) => v.attributes?.[k] === val)
+    )
+  }
+
+  // Per-color variant representative (first variant matching that color)
+  const getVariantForColor = (colorVal) =>
+    variants.find((v) => v.attributes?.Color === colorVal || v.attributes?.color === colorVal)
+
+  // Resolved images: selected variant → product fallback
+  const images =
+    (selectedVariant?.images?.length ? selectedVariant.images : null) ??
+    (product?.images?.length ? product.images : FALLBACK_PRODUCT.images)
 
   // Format currency helper
   const formatCurrency = (amount, currency = 'INR') => {
@@ -81,18 +135,14 @@ const ProductDetail = () => {
     }).format(amount ?? 0)
   }
 
-  const currentPrice = product?.price?.amount ?? 100
-  const currencyCode = product?.price?.currency || 'INR'
-  const originalPrice = Math.round(currentPrice * 1.8) // Mock strikethrough MRP
+  // Resolved price: selected variant → product fallback
+  const currentPrice = selectedVariant?.price?.amount ?? product?.price?.amount ?? 100
+  const currencyCode = selectedVariant?.price?.currency ?? product?.price?.currency ?? 'INR'
+  const originalPrice = Math.round(currentPrice * 1.8)
   const discountPercent = Math.round(((originalPrice - currentPrice) / originalPrice) * 100)
 
-  const sizes = [
-    { label: 'S', available: true },
-    { label: 'M', available: true, stockLeft: 4 },
-    { label: 'L', available: true },
-    { label: 'XL', available: true },
-    { label: 'XXL', available: false },
-  ]
+  // Stock for the selected variant
+  const selectedVariantStock = selectedVariant?.stock ?? null
 
   return (
     <div className="min-h-screen bg-white text-neutral-900 selection:bg-black selection:text-white antialiased font-sans">
@@ -192,11 +242,10 @@ const ProductDetail = () => {
                 <button
                   key={img._id || idx}
                   onClick={() => setSelectedImageIndex(idx)}
-                  className={`relative w-16 h-20 md:w-20 md:h-24 rounded-sm overflow-hidden border-2 transition-all shrink-0 bg-neutral-100 cursor-pointer ${
-                    selectedImageIndex === idx
-                      ? 'border-black ring-1 ring-black/10'
-                      : 'border-transparent hover:border-neutral-300 opacity-70 hover:opacity-100'
-                  }`}
+                  className={`relative w-16 h-20 md:w-20 md:h-24 rounded-sm overflow-hidden border-2 transition-all shrink-0 bg-neutral-100 cursor-pointer ${selectedImageIndex === idx
+                    ? 'border-black ring-1 ring-black/10'
+                    : 'border-transparent hover:border-neutral-300 opacity-70 hover:opacity-100'
+                    }`}
                 >
                   <img
                     src={img.url}
@@ -292,7 +341,7 @@ const ProductDetail = () => {
 
           {/* ================= RIGHT: PRODUCT DETAILS & PURCHASE ================= */}
           <div className="lg:col-span-5 flex flex-col space-y-6">
-            
+
             {/* Header: Brand & Title */}
             <div>
               <p className="text-xs font-mono font-medium uppercase tracking-widest text-neutral-400">
@@ -337,57 +386,197 @@ const ProductDetail = () => {
               </p>
             </div>
 
-            {/* Size Selector */}
-            <div>
-              <div className="flex items-center justify-between mb-2.5">
-                <span className="text-xs font-bold uppercase tracking-wider text-neutral-900">
-                  Select Size
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setShowSizeGuide(!showSizeGuide)}
-                  className="text-xs font-semibold text-neutral-600 hover:text-black underline underline-offset-2 transition-colors flex items-center gap-1"
-                >
-                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  Size Chart
-                </button>
-              </div>
+            {/* ═══════════════ MYNTRA-STYLE VARIANT SELECTOR ═══════════════ */}
+            {variants.length > 0 && (
+              <div className="space-y-5">
 
-              <div className="grid grid-cols-5 gap-2.5">
-                {sizes.map((sz) => (
-                  <button
-                    key={sz.label}
-                    onClick={() => sz.available && setSelectedSize(sz.label)}
-                    disabled={!sz.available}
-                    className={`py-3 text-xs font-bold tracking-wider uppercase border transition-all rounded-sm relative ${
-                      selectedSize === sz.label
-                        ? 'border-black bg-black text-white shadow-sm'
-                        : sz.available
-                        ? 'border-neutral-200 bg-white text-neutral-900 hover:border-black'
-                        : 'border-neutral-200 bg-neutral-50 text-neutral-300 cursor-not-allowed line-through'
-                    }`}
-                  >
-                    {sz.label}
-                    {sz.stockLeft && sz.available && (
-                      <span className="absolute -top-2 right-1 text-[8px] bg-red-600 text-white px-1 py-0.2 rounded font-mono font-normal">
-                        Few left
+                {/* ── COLOR: image thumbnail swatches ── */}
+                {attributeOptions['Color']?.length > 0 && (
+                  <div>
+                    <p className="text-[11px] font-semibold uppercase tracking-widest text-neutral-500 mb-3">
+                      Color
+                      {selectedAttributes['Color'] && (
+                        <span className="ml-1.5 text-neutral-900 normal-case font-bold tracking-normal">
+                          — {selectedAttributes['Color']}
+                        </span>
+                      )}
+                    </p>
+                    <div className="flex gap-3 flex-wrap">
+                      {attributeOptions['Color'].map((colorVal) => {
+                        const variantForColor = getVariantForColor(colorVal)
+                        const thumbUrl = variantForColor?.images?.[0]?.url
+                        const selected = selectedAttributes['Color'] === colorVal
+                        const available = isValueAvailable('Color', colorVal)
+                        return (
+                          <button
+                            key={colorVal}
+                            type="button"
+                            onClick={() => available && handleAttributeSelect('Color', colorVal)}
+                            disabled={!available}
+                            title={colorVal}
+                            className={`relative flex flex-col items-center gap-1.5 group ${
+                              !available ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'
+                            }`}
+                          >
+                            {/* Thumbnail frame */}
+                            <span
+                              className={`block w-16 h-20 rounded overflow-hidden border-2 transition-all duration-200 ${
+                                selected
+                                  ? 'border-black shadow-md'
+                                  : 'border-transparent group-hover:border-neutral-400'
+                              }`}
+                            >
+                              {thumbUrl ? (
+                                <img
+                                  src={thumbUrl}
+                                  alt={colorVal}
+                                  className="w-full h-full object-cover object-center"
+                                  onError={(e) => {
+                                    e.currentTarget.style.display = 'none'
+                                  }}
+                                />
+                              ) : (
+                                <span className="w-full h-full bg-neutral-100 flex items-center justify-center text-[10px] font-mono text-neutral-400">
+                                  {colorVal[0]}
+                                </span>
+                              )}
+                              {/* Unavailable overlay */}
+                              {!available && (
+                                <span className="absolute inset-0 bg-white/60 flex items-center justify-center">
+                                  <svg className="w-6 h-6 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M6 18L18 6" />
+                                  </svg>
+                                </span>
+                              )}
+                            </span>
+                            {/* Color label */}
+                            <span
+                              className={`text-[10px] font-semibold uppercase tracking-wider transition-colors ${
+                                selected ? 'text-black' : 'text-neutral-400 group-hover:text-neutral-700'
+                              }`}
+                            >
+                              {colorVal}
+                            </span>
+                            {/* Selected tick */}
+                            {selected && (
+                              <span className="absolute -top-1 -right-1 w-4 h-4 bg-black rounded-full flex items-center justify-center shadow">
+                                <svg className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
+                                </svg>
+                              </span>
+                            )}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* ── SIZE: flat bordered chips ── */}
+                {attributeOptions['Size']?.length > 0 && (
+                  <div>
+                    <div className="flex items-center justify-between mb-3">
+                      <p className="text-[11px] font-semibold uppercase tracking-widest text-neutral-500">
+                        Size
+                        {selectedAttributes['Size'] && (
+                          <span className="ml-1.5 text-neutral-900 normal-case font-bold tracking-normal">
+                            — {selectedAttributes['Size']}
+                          </span>
+                        )}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => setShowSizeGuide(true)}
+                        className="flex items-center gap-1 text-[11px] font-semibold text-neutral-500 hover:text-black underline underline-offset-2 transition-colors uppercase tracking-wider"
+                      >
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 11h.01M12 11h.01M15 11h.01M4 19h16a2 2 0 002-2V7a2 2 0 00-2-2H4a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                        </svg>
+                        Size Chart
+                      </button>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {attributeOptions['Size'].map((sizeVal) => {
+                        const available = isValueAvailable('Size', sizeVal)
+                        const selected = selectedAttributes['Size'] === sizeVal
+                        return (
+                          <button
+                            key={sizeVal}
+                            type="button"
+                            onClick={() => available && handleAttributeSelect('Size', sizeVal)}
+                            disabled={!available}
+                            className={`relative min-w-[52px] h-[46px] px-3 text-sm font-bold tracking-wider uppercase border-2 transition-all duration-150 rounded ${
+                              selected
+                                ? 'border-black bg-black text-white'
+                                : available
+                                ? 'border-neutral-300 bg-white text-neutral-800 hover:border-black hover:text-black'
+                                : 'border-neutral-200 bg-white text-neutral-300 cursor-not-allowed'
+                            }`}
+                          >
+                            {sizeVal}
+                            {/* Diagonal slash for unavailable */}
+                            {!available && (
+                              <svg
+                                className="absolute inset-0 w-full h-full pointer-events-none"
+                                viewBox="0 0 100 100"
+                                preserveAspectRatio="none"
+                              >
+                                <line x1="8" y1="92" x2="92" y2="8" stroke="#d1d5db" strokeWidth="2" />
+                              </svg>
+                            )}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* ── INFO-ONLY ATTRIBUTES (Fit, Material, etc.) ── */}
+                {infoKeys.length > 0 && (
+                  <div className="flex flex-wrap gap-x-6 gap-y-2 py-3 border-t border-neutral-100">
+                    {infoKeys.map((key) => {
+                      // Show the value from selectedVariant → first variant → skip
+                      const val =
+                        selectedVariant?.attributes?.[key] ??
+                        variants[0]?.attributes?.[key]
+                      if (!val) return null
+                      return (
+                        <div key={key}>
+                          <span className="block text-[10px] font-mono uppercase tracking-widest text-neutral-400">{key}</span>
+                          <span className="text-xs font-semibold text-neutral-800">{val}</span>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
+
+                {/* ── STOCK STATUS PILL ── */}
+                {selectedVariant ? (
+                  selectedVariantStock !== null && selectedVariantStock <= 5 ? (
+                    <div className="flex items-center gap-2 text-xs text-red-700 bg-red-50 border border-red-100 px-3 py-2 rounded">
+                      <span className="relative flex h-2 w-2 shrink-0">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
                       </span>
-                    )}
-                  </button>
-                ))}
+                      Only <strong className="ml-0.5">{selectedVariantStock} left</strong>&nbsp;— grab it fast!
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2 text-xs text-emerald-700 bg-emerald-50 border border-emerald-100 px-3 py-2 rounded">
+                      <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span>
+                      In stock&nbsp;·&nbsp;<strong>{selectedVariantStock ?? 'Available'} units</strong>
+                    </div>
+                  )
+                ) : (
+                  <div className="flex items-center gap-2 text-xs text-amber-700 bg-amber-50 border border-amber-100 px-3 py-2 rounded">
+                    <span className="relative flex h-2 w-2 shrink-0">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+                    </span>
+                    Fast selling!&nbsp;<strong>3 people</strong>&nbsp;have this in their cart.
+                  </div>
+                )}
               </div>
-
-              {/* Stock Indicator */}
-              <div className="flex items-center gap-2 mt-3 text-xs text-amber-700 bg-amber-50/70 border border-amber-200/60 px-3 py-2 rounded-sm">
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
-                </span>
-                <span>Fast selling piece! <strong>3 people</strong> have this in their cart.</span>
-              </div>
-            </div>
+            )}
 
             {/* Quantity Selector */}
             <div className="flex items-center gap-4">
@@ -542,33 +731,30 @@ const ProductDetail = () => {
                 <button
                   type="button"
                   onClick={() => setActiveTab('description')}
-                  className={`pb-2.5 mr-6 transition-colors border-b-2 ${
-                    activeTab === 'description'
-                      ? 'border-black text-black'
-                      : 'border-transparent text-neutral-400 hover:text-neutral-700'
-                  }`}
+                  className={`pb-2.5 mr-6 transition-colors border-b-2 ${activeTab === 'description'
+                    ? 'border-black text-black'
+                    : 'border-transparent text-neutral-400 hover:text-neutral-700'
+                    }`}
                 >
                   Description
                 </button>
                 <button
                   type="button"
                   onClick={() => setActiveTab('details')}
-                  className={`pb-2.5 mr-6 transition-colors border-b-2 ${
-                    activeTab === 'details'
-                      ? 'border-black text-black'
-                      : 'border-transparent text-neutral-400 hover:text-neutral-700'
-                  }`}
+                  className={`pb-2.5 mr-6 transition-colors border-b-2 ${activeTab === 'details'
+                    ? 'border-black text-black'
+                    : 'border-transparent text-neutral-400 hover:text-neutral-700'
+                    }`}
                 >
                   Fit & Specs
                 </button>
                 <button
                   type="button"
                   onClick={() => setActiveTab('shipping')}
-                  className={`pb-2.5 transition-colors border-b-2 ${
-                    activeTab === 'shipping'
-                      ? 'border-black text-black'
-                      : 'border-transparent text-neutral-400 hover:text-neutral-700'
-                  }`}
+                  className={`pb-2.5 transition-colors border-b-2 ${activeTab === 'shipping'
+                    ? 'border-black text-black'
+                    : 'border-transparent text-neutral-400 hover:text-neutral-700'
+                    }`}
                 >
                   Shipping & Returns
                 </button>
