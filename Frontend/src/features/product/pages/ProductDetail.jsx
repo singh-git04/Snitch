@@ -92,8 +92,8 @@ const ProductDetail = () => {
   const allSelectableChosen = selectableKeys.every((k) => !!selectedAttributes[k])
   const selectedVariant = allSelectableChosen
     ? variants.find((v) =>
-        selectableKeys.every((key) => v.attributes?.[key] === selectedAttributes[key])
-      ) || null
+      selectableKeys.every((key) => v.attributes?.[key] === selectedAttributes[key])
+    ) || null
     : null
 
   // Handle attribute selection (toggle off on re-click)
@@ -414,17 +414,15 @@ const ProductDetail = () => {
                             onClick={() => available && handleAttributeSelect('Color', colorVal)}
                             disabled={!available}
                             title={colorVal}
-                            className={`relative flex flex-col items-center gap-1.5 group ${
-                              !available ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'
-                            }`}
+                            className={`relative flex flex-col items-center gap-1.5 group ${!available ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'
+                              }`}
                           >
                             {/* Thumbnail frame */}
                             <span
-                              className={`block w-16 h-20 rounded overflow-hidden border-2 transition-all duration-200 ${
-                                selected
+                              className={`block w-16 h-20 rounded overflow-hidden border-2 transition-all duration-200 ${selected
                                   ? 'border-black shadow-md'
                                   : 'border-transparent group-hover:border-neutral-400'
-                              }`}
+                                }`}
                             >
                               {thumbUrl ? (
                                 <img
@@ -451,9 +449,8 @@ const ProductDetail = () => {
                             </span>
                             {/* Color label */}
                             <span
-                              className={`text-[10px] font-semibold uppercase tracking-wider transition-colors ${
-                                selected ? 'text-black' : 'text-neutral-400 group-hover:text-neutral-700'
-                              }`}
+                              className={`text-[10px] font-semibold uppercase tracking-wider transition-colors ${selected ? 'text-black' : 'text-neutral-400 group-hover:text-neutral-700'
+                                }`}
                             >
                               {colorVal}
                             </span>
@@ -505,13 +502,12 @@ const ProductDetail = () => {
                             type="button"
                             onClick={() => available && handleAttributeSelect('Size', sizeVal)}
                             disabled={!available}
-                            className={`relative min-w-[52px] h-[46px] px-3 text-sm font-bold tracking-wider uppercase border-2 transition-all duration-150 rounded ${
-                              selected
+                            className={`relative min-w-[52px] h-[46px] px-3 text-sm font-bold tracking-wider uppercase border-2 transition-all duration-150 rounded ${selected
                                 ? 'border-black bg-black text-white'
                                 : available
-                                ? 'border-neutral-300 bg-white text-neutral-800 hover:border-black hover:text-black'
-                                : 'border-neutral-200 bg-white text-neutral-300 cursor-not-allowed'
-                            }`}
+                                  ? 'border-neutral-300 bg-white text-neutral-800 hover:border-black hover:text-black'
+                                  : 'border-neutral-200 bg-white text-neutral-300 cursor-not-allowed'
+                              }`}
                           >
                             {sizeVal}
                             {/* Diagonal slash for unavailable */}
