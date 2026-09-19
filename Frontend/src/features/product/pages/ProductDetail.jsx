@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router'
 import { useProduct } from '../hook/useProduct'
+import { useCart } from '../../cart/hook/useCart'
 
 const FALLBACK_PRODUCT = {
   // _id: "6aa94bea8bfbca1d563075ac",
@@ -41,6 +42,7 @@ const FALLBACK_PRODUCT = {
 const ProductDetail = () => {
   const { productId } = useParams()
   const { handleGetProudctById } = useProduct()
+  const { handleAddItem } = useCart()
 
   const [productData, setProductData] = useState(null)
   const [selectedImageIndex, setSelectedImageIndex] = useState(0)
@@ -420,8 +422,8 @@ const ProductDetail = () => {
                             {/* Thumbnail frame */}
                             <span
                               className={`block w-16 h-20 rounded overflow-hidden border-2 transition-all duration-200 ${selected
-                                  ? 'border-black shadow-md'
-                                  : 'border-transparent group-hover:border-neutral-400'
+                                ? 'border-black shadow-md'
+                                : 'border-transparent group-hover:border-neutral-400'
                                 }`}
                             >
                               {thumbUrl ? (
@@ -503,10 +505,10 @@ const ProductDetail = () => {
                             onClick={() => available && handleAttributeSelect('Size', sizeVal)}
                             disabled={!available}
                             className={`relative min-w-[52px] h-[46px] px-3 text-sm font-bold tracking-wider uppercase border-2 transition-all duration-150 rounded ${selected
-                                ? 'border-black bg-black text-white'
-                                : available
-                                  ? 'border-neutral-300 bg-white text-neutral-800 hover:border-black hover:text-black'
-                                  : 'border-neutral-200 bg-white text-neutral-300 cursor-not-allowed'
+                              ? 'border-black bg-black text-white'
+                              : available
+                                ? 'border-neutral-300 bg-white text-neutral-800 hover:border-black hover:text-black'
+                                : 'border-neutral-200 bg-white text-neutral-300 cursor-not-allowed'
                               }`}
                           >
                             {sizeVal}
@@ -605,6 +607,13 @@ const ProductDetail = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {/* ADD TO CART BUTTON */}
                 <button
+                  onClick={() => {
+                    handleAddItem({
+                      productId: product._id,
+                      variantId: selectedVariant?._id,
+                      quantity
+                    })
+                  }}
                   type="button"
                   className="w-full py-3.5 px-6 border-2 border-black text-black bg-white hover:bg-neutral-900 hover:text-white transition-all duration-200 font-bold uppercase tracking-wider text-xs flex items-center justify-center gap-2.5 shadow-sm active:scale-[0.98] cursor-pointer"
                 >
