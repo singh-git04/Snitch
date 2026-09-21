@@ -1,11 +1,15 @@
-import React, { useState, useRef, useMemo } from 'react'
+import React, { useState, useRef, useMemo } from 'react' // useMemo kept for primaryImage
 import { useSelector } from 'react-redux'
 import { Link, useNavigate } from 'react-router'
 import { useProduct } from '../hook/useProduct'
 
+const PRESET_COLORS = ['Black', 'White', 'Navy', 'Olive', 'Beige', 'Grey', 'Brown', 'Burgundy']
+const CLOTHING_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL']
+const NUMERIC_SIZES = ['28', '30', '32', '34', '36', '38']
+
 const CreateProduct = () => {
   const navigate = useNavigate()
-  const { handleCreateProduct } = useProduct()
+  const { handleCreateProduct, handleAddProductVariant } = useProduct()
   const seller = useSelector((state) => state.auth.user)
 
   // Form State
@@ -14,6 +18,13 @@ const CreateProduct = () => {
   const [priceAmount, setPriceAmount] = useState('')
   const [priceCurrency, setPriceCurrency] = useState('INR')
   const [category, setCategory] = useState('Clothing')
+
+  // Color & Size Attributes State
+  const [color, setColor] = useState('Black')
+  const [customColor, setCustomColor] = useState('')
+  const [selectedSizes, setSelectedSizes] = useState(['S', 'M', 'L', 'XL'])
+  // Single total stock for the color variant (sizes are just attributes, not separate variants)
+  const [totalStock, setTotalStock] = useState(10)
 
   // Images state: array of items: { id, file?: File, url: string, isCover?: boolean }
   const [imagesList, setImagesList] = useState([])
@@ -28,6 +39,20 @@ const CreateProduct = () => {
   const fileInputRef = useRef(null)
 
   const parsedPrice = parseFloat(priceAmount) || 0
+  const activeColor = customColor.trim() || color || ''
+
+  const handleToggleSize = (size) => {
+    setSelectedSizes((prev) => {
+      if (prev.includes(size)) {
+        return prev.filter((s) => s !== size)
+      } else {
+        return [...prev, size]
+      }
+    })
+    if (errors.sizes) {
+      setErrors((prev) => ({ ...prev, sizes: '' }))
+    }
+  }
 
   // Cover image for live preview
   const primaryImage = useMemo(() => {
@@ -109,6 +134,8 @@ const CreateProduct = () => {
     if (!description.trim()) errs.description = 'Product description is required'
     if (!priceAmount || parsedPrice <= 0) errs.priceAmount = 'Please enter a valid price'
     if (imagesList.length === 0) errs.images = 'At least 1 product image is required'
+    if (selectedSizes.length === 0) errs.sizes = 'Please select at least one size'
+    if (!totalStock || Number(totalStock) <= 0) errs.stock = 'Please enter a valid stock quantity'
     return errs
   }
 
@@ -130,6 +157,8 @@ const CreateProduct = () => {
     const urlStrings = imagesList.filter((img) => !img.file && img.url).map((img) => img.url)
 
     try {
+      let createdProduct = null
+
       if (rawFiles.length > 0) {
         // FormData for multipart upload
         const fd = new FormData()
@@ -138,11 +167,21 @@ const CreateProduct = () => {
         fd.append('priceAmount', priceAmount)
         fd.append('priceCurrency', priceCurrency || 'INR')
         fd.append('seller', sellerId)
+        if (activeColor) {
+          fd.append('color', activeColor)
+        }
+        fd.append(
+          'attributes',
+          JSON.stringify({
+            Color: activeColor,
+            Sizes: selectedSizes,
+          })
+        )
 
         rawFiles.forEach((file) => fd.append('images', file))
         urlStrings.forEach((url) => fd.append('images', url))
 
-        await handleCreateProduct(fd)
+        createdProduct = await handleCreateProduct(fd)
       } else {
         // Standard JSON payload
         const payload = {
@@ -154,24 +193,51 @@ const CreateProduct = () => {
           },
           images: urlStrings.map((url) => ({ url })),
           seller: sellerId,
+          attributes: {
+            Color: activeColor,
+            Sizes: selectedSizes,
+          },
         }
 
         try {
-          await handleCreateProduct(payload)
+          createdProduct = await handleCreateProduct(payload)
         } catch (jsonErr) {
           const fd = new FormData()
           fd.append('title', title.trim())
           fd.append('description', description.trim())
           fd.append('priceAmount', priceAmount)
           fd.append('priceCurrency', priceCurrency || 'INR')
-          
           fd.append('seller', sellerId)
+          if (activeColor) {
+            fd.append('color', activeColor)
+          }
           urlStrings.forEach((url) => fd.append('images', url))
-          await handleCreateProduct(fd)
+          createdProduct = await handleCreateProduct(fd)
         }
       }
 
-      setSuccessMessage('Product created successfully.')
+      // Create ONE variant per color — sizes are stored as an attribute array, not separate variants
+      if (createdProduct && createdProduct._id) {
+        const variantPayload = {
+          price: {
+            amount: Number(priceAmount),
+            currency: priceCurrency || 'INR',
+          },
+          stock: Number(totalStock),
+          attributes: {
+            ...(activeColor ? { Color: activeColor } : {}),
+            Sizes: selectedSizes,
+          },
+          images: imagesList,
+        }
+        try {
+          await handleAddProductVariant(createdProduct._id, variantPayload)
+        } catch (vErr) {
+          console.warn('Failed to add color variant:', vErr)
+        }
+      }
+
+      setSuccessMessage('Product and variants created successfully.')
       setTimeout(() => {
         navigate('/seller/dashboard')
       }, 1200)
@@ -228,6 +294,9 @@ const CreateProduct = () => {
               setTitle('')
               setDescription('')
               setPriceAmount('')
+              setColor('Black')
+              setCustomColor('')
+              setSelectedSizes(['S', 'M', 'L', 'XL'])
               setImagesList([])
               setErrors({})
             }}
@@ -379,6 +448,176 @@ const CreateProduct = () => {
               )}
             </div>
 
+            {/* ==================== ATTRIBUTES: COLOR & SIZES ==================== */}
+            <div className="space-y-6 pt-2 border-t border-neutral-200">
+              <div className="border-b border-neutral-200 pb-3">
+                <h3 className="text-sm font-medium uppercase tracking-wider text-neutral-900">
+                  Product Variants & Attributes
+                </h3>
+                <p className="text-xs text-neutral-400 mt-1 font-mono">
+                  Configure color and available sizes to automatically generate product variants.
+                </p>
+              </div>
+
+              {/* Color Attribute */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="block text-xs font-mono uppercase tracking-wider text-neutral-500">
+                    Color: <span className="text-neutral-900 font-bold">{activeColor || 'None'}</span>
+                  </label>
+                  {customColor && (
+                    <button
+                      type="button"
+                      onClick={() => setCustomColor('')}
+                      className="text-[10px] font-mono text-neutral-400 hover:text-black underline"
+                    >
+                      Clear custom
+                    </button>
+                  )}
+                </div>
+
+                {/* Preset Color Swatches */}
+                <div className="flex flex-wrap gap-2">
+                  {PRESET_COLORS.map((c) => {
+                    const isSelected = activeColor.toLowerCase() === c.toLowerCase()
+                    return (
+                      <button
+                        key={c}
+                        type="button"
+                        onClick={() => {
+                          setColor(c)
+                          setCustomColor('')
+                        }}
+                        className={`px-3 py-1.5 text-xs font-mono uppercase tracking-wider border transition-all ${
+                          isSelected
+                            ? 'border-black bg-black text-white font-bold shadow-sm'
+                            : 'border-neutral-200 bg-neutral-50 text-neutral-700 hover:border-neutral-400'
+                        }`}
+                      >
+                        {c}
+                      </button>
+                    )
+                  })}
+                </div>
+
+                {/* Custom Color Input */}
+                <div className="pt-1">
+                  <input
+                    type="text"
+                    value={customColor}
+                    onChange={(e) => setCustomColor(e.target.value)}
+                    placeholder="Or enter custom color (e.g. Sage Green, Charcoal)..."
+                    className="w-full bg-neutral-50 border border-neutral-200 focus:border-black text-neutral-900 text-xs px-3 py-2.5 outline-none placeholder:text-neutral-400 font-mono transition-colors"
+                  />
+                </div>
+              </div>
+
+              {/* Size & Stock Attribute */}
+              <div className="space-y-3 pt-2">
+                <div className="flex items-center justify-between">
+                  <label className="block text-xs font-mono uppercase tracking-wider text-neutral-500">
+                    Available Sizes * ({selectedSizes.length} Selected)
+                  </label>
+                  <div className="flex gap-2 text-[10px] font-mono">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedSizes([...CLOTHING_SIZES])}
+                      className="text-neutral-500 hover:text-black underline"
+                    >
+                      All Standard
+                    </button>
+                    <span>|</span>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedSizes([])}
+                      className="text-neutral-500 hover:text-black underline"
+                    >
+                      Deselect All
+                    </button>
+                  </div>
+                </div>
+
+                {/* Clothing Size Chips */}
+                <div>
+                  <span className="text-[10px] font-mono uppercase text-neutral-400 block mb-1.5">
+                    Standard Apparel
+                  </span>
+                  <div className="flex flex-wrap gap-2">
+                    {CLOTHING_SIZES.map((sz) => {
+                      const isSelected = selectedSizes.includes(sz)
+                      return (
+                        <button
+                          key={sz}
+                          type="button"
+                          onClick={() => handleToggleSize(sz)}
+                          className={`min-w-[48px] h-10 px-3 text-xs font-bold font-mono uppercase border-2 transition-all ${
+                            isSelected
+                              ? 'border-black bg-black text-white shadow-sm'
+                              : 'border-neutral-200 bg-white text-neutral-700 hover:border-neutral-400'
+                          }`}
+                        >
+                          {sz}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                {/* Numeric Sizes (Pants / Footwear) */}
+                <div>
+                  <span className="text-[10px] font-mono uppercase text-neutral-400 block mb-1.5">
+                    Numeric Sizing (Pants / Denim)
+                  </span>
+                  <div className="flex flex-wrap gap-2">
+                    {NUMERIC_SIZES.map((sz) => {
+                      const isSelected = selectedSizes.includes(sz)
+                      return (
+                        <button
+                          key={sz}
+                          type="button"
+                          onClick={() => handleToggleSize(sz)}
+                          className={`min-w-[48px] h-10 px-3 text-xs font-bold font-mono uppercase border-2 transition-all ${
+                            isSelected
+                              ? 'border-black bg-black text-white shadow-sm'
+                              : 'border-neutral-200 bg-white text-neutral-700 hover:border-neutral-400'
+                          }`}
+                        >
+                          {sz}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                {errors.sizes && <p className="text-xs text-red-600 font-mono mt-1">{errors.sizes}</p>}
+
+                {/* Total Stock for this Color Variant */}
+                <div className="pt-3 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-mono uppercase tracking-wider text-neutral-600 font-semibold">
+                      Total Stock for this Color *
+                    </label>
+                    <span className="text-[10px] font-mono text-neutral-400">
+                      Units available across all sizes
+                    </span>
+                  </div>
+                  <input
+                    type="number"
+                    min="0"
+                    step="1"
+                    value={totalStock}
+                    onChange={(e) => setTotalStock(Math.max(0, parseInt(e.target.value, 10) || 0))}
+                    className="w-full bg-neutral-50 border border-neutral-300 text-neutral-900 text-sm px-3 py-2.5 outline-none text-right font-mono focus:border-black transition-colors"
+                    placeholder="e.g. 50"
+                  />
+                  {errors.stock && <p className="text-xs text-red-600 font-mono">{errors.stock}</p>}
+                  <p className="text-[10px] font-mono text-neutral-400">
+                    One color variant will be created with all selected sizes as available options.
+                  </p>
+                </div>
+              </div>
+            </div>
+
             {/* Images Upload */}
             <div className="space-y-4 pt-2">
               <label className="block text-xs font-mono uppercase tracking-wider text-neutral-500">
@@ -525,6 +764,27 @@ const CreateProduct = () => {
                 <p className="text-xs text-neutral-500 line-clamp-2 leading-relaxed font-light">
                   {description.trim() || 'Your product description will appear here.'}
                 </p>
+
+                {/* Variant Previews */}
+                <div className="pt-2 border-t border-neutral-100 flex items-center justify-between text-xs font-mono">
+                  <div className="flex items-center gap-2">
+                    <span className="text-neutral-400">COLOR:</span>
+                    <span className="font-bold text-neutral-900 uppercase">{activeColor || 'None'}</span>
+                  </div>
+                  <div className="text-neutral-500">
+                    <span>{totalVariantStock} units</span>
+                  </div>
+                </div>
+
+                {selectedSizes.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 pt-1">
+                    {selectedSizes.map((sz) => (
+                      <span key={sz} className="text-[10px] font-mono px-2 py-0.5 bg-neutral-100 text-neutral-800 border border-neutral-200">
+                        {sz} ({sizeStocks[sz] !== undefined ? sizeStocks[sz] : 10})
+                      </span>
+                    ))}
+                  </div>
+                )}
 
                 <div className="pt-4 border-t border-neutral-150 flex items-center justify-between">
                   <span className="text-xs font-mono text-neutral-400">PRICE</span>

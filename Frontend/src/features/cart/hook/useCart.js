@@ -5,9 +5,9 @@ import { addItem as addItemToCart, setItems,incrementCartItem } from "../state/c
 export const useCart = () => {
     const dispatch = useDispatch()
 
-    async function handleAddItem({ productId, variantId }) {
+    async function handleAddItem({ productId, variantId, quantity = 1, size }) {
 
-        const data = await addToCart({ productId, variantId })
+        const data = await addToCart({ productId, variantId, quantity, size })
 
         return data
     }
