@@ -1,6 +1,6 @@
-import { addToCart, getCart, incrementCartItemApi } from "../service/cart.api.js"
+import { addToCart, createCartOrder, getCart, incrementCartItemApi,verifyCartOrder } from "../service/cart.api.js"
 import { useDispatch } from "react-redux"
-import { addItem as addItemToCart, setItems,incrementCartItem } from "../state/cart.slice"
+import { addItem as addItemToCart, setItems, incrementCartItem } from "../state/cart.slice"
 
 export const useCart = () => {
     const dispatch = useDispatch()
@@ -13,14 +13,24 @@ export const useCart = () => {
     }
 
     async function handleGetCart() {
-        const data  = await getCart()
+        const data = await getCart()
         dispatch(setItems(data.cart.items))
     }
 
     async function handleIncrementCartItem({ productId, variantId }) {
-        const data  = await incrementCartItemApi({ productId, variantId })
+        const data = await incrementCartItemApi({ productId, variantId })
         dispatch(incrementCartItem({ productId, variantId }))
     }
 
-    return { handleAddItem ,handleGetCart, handleIncrementCartItem}
+    async function handleCreateCartOrder() {
+        const data = await createCartOrder()
+        return data.order
+    }
+
+    async function handleVerifyCartOrder(razorpay_order_id, razorpay_payment_id, razorpay_signature) {
+        const data = await verifyCartOrder(razorpay_order_id, razorpay_payment_id, razorpay_signature)
+        return data.order
+    }
+
+    return { handleAddItem, handleGetCart, handleIncrementCartItem, handleCreateCartOrder, handleVerifyCartOrder }
 }

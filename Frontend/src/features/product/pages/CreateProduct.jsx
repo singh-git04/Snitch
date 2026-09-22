@@ -772,7 +772,7 @@ const CreateProduct = () => {
                     <span className="font-bold text-neutral-900 uppercase">{activeColor || 'None'}</span>
                   </div>
                   <div className="text-neutral-500">
-                    <span>{totalVariantStock} units</span>
+                    <span>{Number(totalStock) || 0} units</span>
                   </div>
                 </div>
 
@@ -780,7 +780,7 @@ const CreateProduct = () => {
                   <div className="flex flex-wrap gap-1.5 pt-1">
                     {selectedSizes.map((sz) => (
                       <span key={sz} className="text-[10px] font-mono px-2 py-0.5 bg-neutral-100 text-neutral-800 border border-neutral-200">
-                        {sz} ({sizeStocks[sz] !== undefined ? sizeStocks[sz] : 10})
+                        {sz}
                       </span>
                     ))}
                   </div>

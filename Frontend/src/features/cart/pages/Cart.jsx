@@ -2,6 +2,7 @@ import React, { useEffect, useState, useMemo } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { Link, useNavigate } from 'react-router'
 import { useCart } from '../hook/useCart'
+import { useRazorpay } from "react-razorpay"
 import { setItems } from '../state/cart.slice'
 
 // Initial fallback/sample data matching the user's provided structure
@@ -75,7 +76,9 @@ const Cart = () => {
   const dispatch = useDispatch()
   const navigate = useNavigate()
   const reduxCartItems = useSelector((state) => state.cart?.items)
-  const { handleGetCart,handleIncrementCartItem } = useCart()
+  const { error, isLoading, Razorpay } = useRazorpay()
+  const { handleGetCart, handleIncrementCartItem, handleCreateCartOrder,handleVerifyCartOrder } = useCart()
+  const user = useSelector((state) => state.auth.user)
 
   // Local state for immediate responsiveness and offline support
   const [items, setLocalItems] = useState([])
@@ -112,7 +115,6 @@ const Cart = () => {
     setToast(message)
     setTimeout(() => setToast(null), 3000)
   }
-console.log(reduxCartItems)
   // Quantity updates
   const handleQuantityChange = (itemId, delta) => {
     setLocalItems((prev) =>
@@ -159,16 +161,53 @@ console.log(reduxCartItems)
     showToast("Coupon removed")
   }
 
+  async function handleCheckOut() {
+    const order = await handleCreateCartOrder()
+     
+    const options = {
+      key: "rzp_test_Tf1T0dBrltaAbC",
+      amount: order.amount, // Amount in paise
+      currency: order.currency,
+      name: "Snitch",
+      description: "Test Transaction",
+      order_id: order.id, // Generate order_id on server
+      handler: async (response) => {
+         const isValid  = await handleVerifyCartOrder(response  )
+          if(!isValid){
+            navigate(`/order-success?order_id=${response.razorpay_order_id}`)
+          }
+      },
+      prefill: {
+        name: user.fullname,
+        email: user.email,
+        contact: user.contact,
+      },
+      theme: {
+        color: "#F37254",
+      },
+    };
+
+    const razorpayInstance = new Razorpay(options);
+    razorpayInstance.open()
+  }
   // Calculations
   const calculations = useMemo(() => {
     const subtotal = items.reduce((acc, item) => {
-      const price = item.price?.amount || item.product?.price?.amount || 0
+      const price = item.product?.variants?.price?.amount ||
+        item.price?.amount ||
+        item.product?.price?.amount ||
+        0
+
       return acc + price * (item.quantity || 1)
     }, 0)
 
     // Original MRP benchmark (estimated 40% markup for display savings)
     const totalMrp = items.reduce((acc, item) => {
-      const price = item.price?.amount || item.product?.price?.amount || 0
+      const price = item.product?.variants?.price?.amount ||
+        item.price?.amount ||
+        item.product?.price?.amount ||
+        0
+
       const mrp = Math.round(price * 1.65)
       return acc + mrp * (item.quantity || 1)
     }, 0)
@@ -184,7 +223,7 @@ console.log(reduxCartItems)
       }
     }
 
-    const freeShippingThreshold = 999
+    const freeShippingThreshold = 0
     const shippingFee = subtotal >= freeShippingThreshold || subtotal === 0 ? 0 : 99
     const totalPayable = Math.max(0, subtotal - couponDiscount + shippingFee)
     const totalSavings = mrpDiscount + couponDiscount + (subtotal >= freeShippingThreshold ? 99 : 0)
@@ -368,7 +407,7 @@ console.log(reduxCartItems)
                   const product = item.product || {}
                   // Find matching variant details (size, variant specific image, stock)
                   const variantId = typeof item.variant === 'object' ? item.variant?._id : item.variant
-                  const matchedVariant = product.variants?.find((v) => v._id === variantId) || product.variants?.[0]
+                  const matchedVariant = product.variants
 
                   // Selected attributes
                   const size = matchedVariant?.attributes?.Size || matchedVariant?.attributes?.size || 'Free Size'
@@ -381,7 +420,7 @@ console.log(reduxCartItems)
                     product.images?.[0]?.url ||
                     "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&q=80&w=900"
 
-                  const unitPrice = item.price?.amount || matchedVariant?.price?.amount || product.price?.amount || 0
+                  const unitPrice = matchedVariant?.price?.amount || item.price?.amount || product.price?.amount || 0
                   const currency = item.price?.currency || product.price?.currency || 'INR'
                   const originalMrp = Math.round(unitPrice * 1.65)
                   const discountPercent = Math.round(((originalMrp - unitPrice) / originalMrp) * 100)
@@ -491,7 +530,7 @@ console.log(reduxCartItems)
                                 {item.quantity}
                               </span>
                               <button
-                                onClick={() => handleIncrementCartItem({productId: product._id, variantId})}
+                                onClick={() => handleIncrementCartItem({ productId: product._id, variantId })}
                                 className="w-8 h-8 flex items-center justify-center text-neutral-600 hover:bg-neutral-200 active:bg-neutral-300 transition-colors font-bold text-sm"
                                 aria-label="Increase quantity"
                               >
@@ -702,7 +741,8 @@ console.log(reduxCartItems)
                 {/* Checkout CTA */}
                 <button
                   onClick={() => {
-                    showToast("Redirecting to checkout...")
+                    handleCheckOut()
+                    // showToast("Redirecting to checkout...")
                   }}
                   className="w-full mt-5 py-4 bg-black text-white text-xs font-bold tracking-[0.2em] uppercase hover:bg-neutral-800 active:scale-[0.99] transition-all flex items-center justify-center gap-2 shadow-lg cursor-pointer"
                 >

@@ -1,7 +1,7 @@
 import { Router } from "express"
 import { authenticateUser } from "../middleware/authenticateSeller.js"
 import { validateAddToCart, validateIncrementCartItemQuantity } from "../validator/cart.validation.js"
-import { addToCart, getCart, incrementCartItemQuantity } from "../controller/cart.controller.js"
+import { addToCart, createOrderController, getCart, incrementCartItemQuantity, verifyOrderController } from "../controller/cart.controller.js"
 
  const router = Router()
 
@@ -32,5 +32,13 @@ router.get("/", authenticateUser, getCart)
     @argument varinatId - ID of the variant to update
 */
 router.patch("/quantity/increment/:productId/:variantId", authenticateUser, validateIncrementCartItemQuantity, incrementCartItemQuantity)
+
+/* 
+    @route Post/api/cart/payment/create/order
+*/
+router.post("/payment/create/order", authenticateUser, createOrderController)
+
+router.post("/payment/verify/order",authenticateUser, verifyOrderController)
+
 
 export default router
