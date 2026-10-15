@@ -1,3 +1,6 @@
+import path from 'node:path'
+import { fileURLToPath } from "node:url"
+
 import cookieParser from "cookie-parser"
 import express from "express"
 import morgan from "morgan"
@@ -11,6 +14,19 @@ import { Strategy as GoogleStrategy } from 'passport-google-oauth20'
 
 const app = express()
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const publicPath = path.resolve(__dirname, "../public");
+
+app.use(express.static(publicPath))
+
+app.use((req, res, next) => {
+  if (req.method !== "GET" || req.path.startsWith("/api/")) {
+    return next();
+  }
+
+  res.sendFile(path.join(publicPath, "index.html"));
+});
 
 app.use(morgan("dev"))
 app.use(express.json())
