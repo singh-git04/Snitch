@@ -5,7 +5,7 @@ import authRouter from './routes/auth.route.js'
 import productRouter from './routes/product.route.js'
 import cartRouter from './routes/cart.route.js'
 import cors from 'cors'
-import { config} from './config/config.js'
+import { config } from './config/config.js'
 import passport from "passport"
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20'
 
@@ -14,11 +14,11 @@ const app = express()
 
 app.use(morgan("dev"))
 app.use(express.json())
-app.use(express.urlencoded({extended:true}))
+app.use(express.urlencoded({ extended: true }))
 app.use(cookieParser())
 app.use(cors({
-    origin: "http://localhost:5173",
-    methods: ["GET", "POST", "PUT", "DELETE"],
+    origin: process.env.FRONTEND_URL,
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     credentials: true
 }))
 
@@ -34,13 +34,13 @@ passport.use(new GoogleStrategy({
 }
 ))
 
-app.get('/',(_req,res)=>{
-    res.status(200).json({"message": "Server is running"})
+app.get('/', (_req, res) => {
+    res.status(200).json({ "message": "Server is running" })
 })
 
 
-app.use('/api/auth',authRouter)
-app.use('/api/products',productRouter)
+app.use('/api/auth', authRouter)
+app.use('/api/products', productRouter)
 app.use('/api/cart', cartRouter)
 
 

@@ -1,4 +1,4 @@
-import {createBrowserRouter} from "react-router"
+import { createBrowserRouter, Navigate } from "react-router"
 import Register from "../features/auth/pages/Register.jsx"
 import Login from "../features/auth/pages/Login.jsx"
 import CreateProduct from "../features/product/pages/CreateProduct.jsx"
@@ -11,7 +11,6 @@ import Cart from "../features/cart/pages/Cart.jsx"
 import OrderSuccess from "../features/cart/pages/OrderSuccess.jsx"
 
 export const routes = createBrowserRouter([
-
     {
         path: "/login",
         element: <Login/>
@@ -40,10 +39,28 @@ export const routes = createBrowserRouter([
         path: "/seller",
         children:[
             {
+                index: true,
+                element: <Navigate to="/seller/dashboard" replace />
+            },
+            {
+                path: "create-product",
+                element: 
+                <Protected role="seller">    
+                    <CreateProduct/>
+                </Protected>
+            },
+            {
                 path: "/seller/create-product",
                 element: 
                 <Protected role="seller">    
                     <CreateProduct/>
+                </Protected>
+            },
+            {
+                path: "dashboard",
+                element: 
+                <Protected role="seller">    
+                    <Dashboard/>
                 </Protected>
             },
             {
@@ -52,7 +69,15 @@ export const routes = createBrowserRouter([
                 <Protected role="seller">    
                     <Dashboard/>
                 </Protected>
-            },{
+            },
+            {
+                path: "product/:productId",
+                element:
+                <Protected role="seller">
+                    <SellerProductDetails/>
+                </Protected>
+            },
+            {
                 path: "/seller/product/:productId",
                 element:
                 <Protected role="seller">
@@ -60,5 +85,9 @@ export const routes = createBrowserRouter([
                 </Protected>
             }
         ]
+    },
+    {
+        path: "*",
+        element: <Navigate to="/" replace />
     }
 ])

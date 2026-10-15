@@ -25,7 +25,7 @@ const paymentSchema = new mongoose.Schema({
         {
             title: String,
             productId:mongoose.Schema.Types.ObjectId,
-            vairantId: mongoose.Schema.Types.ObjectId,
+            variantId: mongoose.Schema.Types.ObjectId,
             quantity: Number,
             images: [{url: String}],
             description: String,

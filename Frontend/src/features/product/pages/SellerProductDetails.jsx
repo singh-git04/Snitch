@@ -554,7 +554,7 @@ console.log(productData)
                         {/* Actions Bottom Bar */}
                         <div className="px-5 py-3 border-t border-neutral-150 bg-neutral-50/50 flex items-center justify-between text-xs font-mono">
                           <span className="text-neutral-400 text-[11px]">
-                            ID: {variant._id ? variant._id.slice(-6) : `idx-${vIdx + 1}`}
+                            ID: {variant._id ? variant._id.slice(-6) : `idx-${index + 1}`}
                           </span>
                           <button
                             onClick={() => setIsDeletingVariant(variant)}

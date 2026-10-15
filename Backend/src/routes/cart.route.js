@@ -1,7 +1,7 @@
 import { Router } from "express"
 import { authenticateUser } from "../middleware/authenticateSeller.js"
-import { validateAddToCart, validateIncrementCartItemQuantity } from "../validator/cart.validation.js"
-import { addToCart, createOrderController, getCart, incrementCartItemQuantity, verifyOrderController } from "../controller/cart.controller.js"
+import { validateAddToCart, validateCartItemQuantity } from "../validator/cart.validation.js"
+import { addToCart, createOrderController, decrementCartItemQuantity, getCart, getOrderDetailsController, incrementCartItemQuantity, verifyOrderController } from "../controller/cart.controller.js"
 
  const router = Router()
 
@@ -31,7 +31,16 @@ router.get("/", authenticateUser, getCart)
     @argument productId - ID of the product  to update
     @argument varinatId - ID of the variant to update
 */
-router.patch("/quantity/increment/:productId/:variantId", authenticateUser, validateIncrementCartItemQuantity, incrementCartItemQuantity)
+router.patch("/quantity/increment/:productId/:variantId", authenticateUser, validateCartItemQuantity, incrementCartItemQuantity)
+
+/*
+    @route Patch /api/cart/quantity/decrement/:productId/:variantId
+    @desc Decreament item quantity in cart by one
+    @access Private
+    @argument productId - ID of the product  to update
+    @argument varinatId - ID of the variant to update
+*/
+router.patch("/quantity/decrement/:productId/:variantId", authenticateUser, validateCartItemQuantity, decrementCartItemQuantity)
 
 /* 
     @route Post/api/cart/payment/create/order
@@ -39,6 +48,8 @@ router.patch("/quantity/increment/:productId/:variantId", authenticateUser, vali
 router.post("/payment/create/order", authenticateUser, createOrderController)
 
 router.post("/payment/verify/order",authenticateUser, verifyOrderController)
+
+router.get("/order/:orderId", authenticateUser, getOrderDetailsController)
 
 
 export default router

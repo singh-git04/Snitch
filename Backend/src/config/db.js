@@ -1,10 +1,15 @@
-import mongoose from "mongoose"
-import { config } from "./config.js"
+import mongoose from "mongoose";
+import dns from "dns";
+import { config } from "./config.js";
+
+dns.setServers(["8.8.8.8", "8.8.4.4"]);
 
 async function connectToDb() {
-    // console.log(config.MONGO_URI)
-    await mongoose.connect(config.MONGO_URI)
-    console.log('Connected to Db')
+  console.log("mongo url--------------", config.MONGO_URI);
+
+  const conn = await mongoose.connect(config.MONGO_URI);
+
+  console.log("MONGODB Connected", conn.connection.host);
 }
 
-export default connectToDb
+export default connectToDb;

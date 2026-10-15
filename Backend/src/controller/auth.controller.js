@@ -1,23 +1,23 @@
-import {userModel} from "../model/user.model.js"
+import userModel from "../model/user.model.js"
 import jwt from "jsonwebtoken"
-import {config} from "../config/config.js"
+import { config } from "../config/config.js"
 
 
-async function sendTokenResponse(user,res, message) {
-    
+async function sendTokenResponse(user, res, message) {
+
     const token = jwt.sign({
-        id:user._id,
-        email:user.email
-    },config.JWT_SECRET,{
+        id: user._id,
+        email: user.email
+    }, config.JWT_SECRET, {
         expiresIn: "7d"
     })
 
-    res.cookie("token",token)
+    res.cookie("token", token)
 
     res.status(200).json({
         message,
         success: true,
-        user:{
+        user: {
             id: user._id,
             email: user.email,
             fullname: user.fullname,
@@ -28,7 +28,7 @@ async function sendTokenResponse(user,res, message) {
     })
 }
 
-export async function register(req,res) {
+export async function register(req, res) {
 
     const { email, password, fullname, contact, isSeller } = req.body
 
@@ -37,13 +37,13 @@ export async function register(req,res) {
         const existingUser = await userModel.findOne({
 
             $or: [
-                {email},
-                {contact}
+                { email },
+                { contact }
             ]
         })
-        
 
-        if(existingUser) {
+
+        if (existingUser) {
             return res.status(400).json({
                 message: "User already exists with this email or contact"
             })
@@ -56,42 +56,42 @@ export async function register(req,res) {
             role: isSeller ? "seller" : "buyer"
         })
 
-        await sendTokenResponse(user,res, "User registered successfully")
+        await sendTokenResponse(user, res, "User registered successfully")
     } catch (error) {
         console.log(error)
         res.status(500).json({
             message: "Server error"
         })
     }
-    
+
 }
 
 
-export async function login(req,res) {
+export async function login(req, res) {
     const { email, password } = req.body
 
-    try{
+    try {
         const user = await userModel.findOne({
             $or: [
-                {email},
-                {password}
+                { email },
+                { password }
             ]
         })
 
-        if(!user){
+        if (!user) {
             return res.status(400).json({
                 message: "Invalid email or password"
             })
         }
         const isPasswordMatched = await user.comparePassword(password)
 
-        if(!isPasswordMatched){
+        if (!isPasswordMatched) {
             return res.status(400).json({
                 message: "Invalid email or password"
             })
         }
 
-        await sendTokenResponse(user,res, "User logged in successfully")
+        await sendTokenResponse(user, res, "User logged in successfully")
     } catch (error) {
         console.log(error)
         res.status(500).json({
@@ -100,7 +100,7 @@ export async function login(req,res) {
     }
 }
 
-export const googleCallback = async (req,res) => {
+export const googleCallback = async (req, res) => {
     console.log(req.user)
 
     const { id, displayName, emails, photos } = req.user
@@ -112,7 +112,7 @@ export const googleCallback = async (req,res) => {
         email
     })
 
-    if(!user){
+    if (!user) {
         user = await userModel.create({
             email,
             googleId: id,
@@ -122,15 +122,15 @@ export const googleCallback = async (req,res) => {
 
     const token = jwt.sign({
         id: user._id,
-        
-    }, config.JWT_SECRET,({expiresIn: '7d'}))
+
+    }, config.JWT_SECRET, ({ expiresIn: '7d' }))
 
     res.cookie("token", token)
-    
-    res.redirect("http://localhost:5173")
+
+    res.redirect(process.env.FRONTEND_URL)
 }
 
-export const getMe = async(req,res)=>{
+export const getMe = async (req, res) => {
     const user = req.user
 
     res.status(200).json({

@@ -77,7 +77,6 @@ export const addToCart = async (req, res) => {
 
 }
 
-
 export const getCart = async (req, res) => {
 
     const user = req.user
@@ -139,6 +138,79 @@ export const incrementCartItemQuantity = async (req, res) => {
 
     return res.status(200).json({
         message: "Cart item quantity incremented successfully",
+        success: true
+    })
+}
+
+export const decrementCartItemQuantity = async (req, res) => {
+
+    const { productId, variantId } = req.params
+
+    const cart = await cartModel.findOne({
+        user: req.user._id
+    })
+
+    if (!cart) {
+        return res.status(404).json({
+            message: "Cart not found",
+            success: false
+        })
+    }
+
+    const item = cart.items.find(
+        item =>
+            item.product.toString() === productId &&
+            item.variant?.toString() === variantId
+    )
+
+    if (!item) {
+        return res.status(404).json({
+            message: "Cart item not found",
+            success: false
+        })
+    }
+
+    if (item.quantity > 1) {
+
+        await cartModel.findOneAndUpdate(
+            {
+                user: req.user._id,
+                "items.product": productId,
+                "items.variant": variantId
+            },
+            {
+                $inc: {
+                    "items.$.quantity": -1
+                }
+            },
+            {
+                new: true
+            }
+        )
+
+    } else {
+
+        await cartModel.findOneAndUpdate(
+            {
+                user: req.user._id,
+                items: { $elemMatch: { product: productId, variant: variantId } }
+            },
+            {
+                $pull: {
+                    items: {
+                        product: productId,
+                        variant: variantId
+                    }
+                }
+            },
+            {
+                new: true
+            }
+        )
+    }
+
+    return res.status(200).json({
+        message: "Cart item quantity decremented successfully",
         success: true
     })
 }
@@ -234,8 +306,44 @@ export const verifyOrderController = async (req, res) =>{
 
     await payment.save()
 
+    // Clear cart upon successful payment
+    await cartModel.findOneAndUpdate(
+        { user: req.user._id },
+        { items: [], totalPrice: 0 }
+    )
+
     return res.status(200).json({
         message: "Payment verified successfully",
-        success: true
+        success: true,
+        order: payment
     })
+}
+
+export const getOrderDetailsController = async (req, res) => {
+    try {
+        const { orderId } = req.params
+        const payment = await paymentModel.findOne({
+            "razorpay.orderId": orderId,
+            user: req.user._id
+        })
+
+        if (!payment) {
+            return res.status(404).json({
+                message: "Order not found",
+                success: false
+            })
+        }
+
+        return res.status(200).json({
+            message: "Order details fetched successfully",
+            success: true,
+            order: payment
+        })
+    } catch (error) {
+        return res.status(500).json({
+            message: "Failed to fetch order details",
+            success: false,
+            error: error.message
+        })
+    }
 }

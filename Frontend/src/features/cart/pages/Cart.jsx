@@ -3,7 +3,7 @@ import { useSelector, useDispatch } from 'react-redux'
 import { Link, useNavigate } from 'react-router'
 import { useCart } from '../hook/useCart'
 import { useRazorpay } from "react-razorpay"
-import { setItems } from '../state/cart.slice'
+import { setItems, clearCart } from '../state/cart.slice'
 
 // Initial fallback/sample data matching the user's provided structure
 const DEFAULT_CART_ITEMS = [
@@ -77,7 +77,7 @@ const Cart = () => {
   const navigate = useNavigate()
   const reduxCartItems = useSelector((state) => state.cart?.items)
   const { error, isLoading, Razorpay } = useRazorpay()
-  const { handleGetCart, handleIncrementCartItem, handleCreateCartOrder,handleVerifyCartOrder } = useCart()
+  const { handleGetCart, handleIncrementCartItem, handledecrementCartItem, handleCreateCartOrder,handleVerifyCartOrder } = useCart()
   const user = useSelector((state) => state.auth.user)
 
   // Local state for immediate responsiveness and offline support
@@ -172,10 +172,37 @@ const Cart = () => {
       description: "Test Transaction",
       order_id: order.id, // Generate order_id on server
       handler: async (response) => {
-         const isValid  = await handleVerifyCartOrder(response  )
-          if(!isValid){
-            navigate(`/order-success?order_id=${response.razorpay_order_id}`)
+        try {
+          const res = await handleVerifyCartOrder(response)
+          if (res?.success) {
+            dispatch(clearCart())
+            navigate(`/order-success?order_id=${response.razorpay_order_id}`, {
+              state: {
+                orderId: response.razorpay_order_id,
+                paymentId: response.razorpay_payment_id,
+                items: items,
+                calculations: calculations,
+                pincode: pincode,
+                orderData: res.order
+              }
+            })
+          } else {
+            showToast("Payment verification failed. Please check with your bank.")
           }
+        } catch (err) {
+          console.error("Payment error:", err)
+          // Even on network hiccup if razorpay succeeded, navigate with fallback
+          dispatch(clearCart())
+          navigate(`/order-success?order_id=${response.razorpay_order_id}`, {
+            state: {
+              orderId: response.razorpay_order_id,
+              paymentId: response.razorpay_payment_id,
+              items: items,
+              calculations: calculations,
+              pincode: pincode
+            }
+          })
+        }
       },
       prefill: {
         name: user.fullname,
@@ -520,7 +547,7 @@ const Cart = () => {
                             {/* Quantity Stepper */}
                             <div className="flex items-center border border-neutral-300 bg-neutral-50">
                               <button
-                                onClick={() => handleQuantityChange(item._id, -1)}
+                                onClick={() => handledecrementCartItem({ productId: product._id, variantId })}
                                 className="w-8 h-8 flex items-center justify-center text-neutral-600 hover:bg-neutral-200 active:bg-neutral-300 transition-colors font-bold text-sm"
                                 aria-label="Decrease quantity"
                               >

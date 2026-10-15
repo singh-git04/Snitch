@@ -27,12 +27,12 @@ export const incrementCartItemApi = async ({ productId, variantId }) => {
     return response.data
 }
 
-// export const decrementCartItemApi = async ({ productId, variantId})  => {
+export const decrementCartItemApi = async ({ productId, variantId})  => {
 
-//     const response = await cartApiInstance.patch(`/quantity/decrement/${productId}/${variantId}`)
+    const response = await cartApiInstance.patch(`/quantity/decrement/${productId}/${variantId}`)
 
-//     return response.data
-// }
+    return response.data
+}
 
 export const createCartOrder = async () => {
     const response = await cartApiInstance.post('/payment/create/order')
@@ -45,5 +45,10 @@ export const verifyCartOrder  = async ({ razorpay_order_id, razorpay_payment_id,
         razorpay_payment_id,
         razorpay_signature
     })
+    return response.data
+}
+
+export const getOrderDetails = async (orderId) => {
+    const response = await cartApiInstance.get(`/order/${orderId}`)
     return response.data
 }
